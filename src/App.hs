@@ -75,6 +75,7 @@ data State = State { lectureName     :: String
                    , pendingRequests :: [ HelpRequest ]
                    , actionLog       :: [ LogItem ]
                    , backlogMinutes  :: Integer
+                   , userInfo        :: String
                    }
   deriving (Generic, Show, Eq)
 instance ToJSON State
@@ -113,6 +114,7 @@ data User = User
   { user  :: Username
   , pass  :: Password
   , admin :: Bool
+  , uinfo  :: String
   , url   :: String
   } deriving (Eq, Show, Generic)
 instance FromJSON User
@@ -128,10 +130,10 @@ createUserDB :: [User] -> UserDB
 createUserDB users = Map.fromList [ (user u, u) | u <- users ]
 
 -- our test database
-data Admin = Admin String | InvalidAdmin deriving (Eq, Show)
+data Admin = Admin String String | InvalidAdmin deriving (Eq, Show)
 
 fromUser :: User -> Admin
-fromUser User{user=u, admin=True} = Admin u
+fromUser User{user=u, uinfo=l, admin=True} = Admin u l
 fromUser User{} = InvalidAdmin
 
 
@@ -295,6 +297,7 @@ run = do
                                            , pendingRequests = []
                                            , actionLog = []
                                            , backlogMinutes = backlogminutes $ configdata
+                                           , userInfo = ""
                                            }
   dbref <- newIORef $ AuthConfig (acceptanyusers (configdata :: LectureConfig)) (createUserDB $ authdb (configdata :: LectureConfig))
   runSettings settings $ stripAuthenticateHeader $ mkApp dbref $ ServantState appstate (configfile (config :: CLIConfig)) dbref
@@ -394,7 +397,8 @@ requestPublicState u = do
   s@State{activeRequests=a,pendingRequests=p} <- liftIO $ atomically $ readTVar sest
   let active = Map.map blind a
   let pend   = Prelude.map blind p
-  return $ s{activeRequests=active, pendingRequests=pend, actionLog = []}
+  let inf    = uinfo $ u
+  return $ s{activeRequests=active, pendingRequests=pend, userInfo=inf, actionLog = []}
   where
     blind r@(HelpRequest _ (AuthUser au) _ _ _)
         | au == user u = r
@@ -403,12 +407,17 @@ requestPublicState u = do
 
 
 requestAdminState  :: Admin -> AppM State
-requestAdminState _ = do
+requestAdminState a = do
   ServantState{state=sest} <- ask
-  liftIO $ atomically $ readTVar sest
+  s@State{} <- liftIO $ atomically $ readTVar sest
+  let inf    = getinfo a
+  return $ s{userInfo=inf}
+  where
+    getinfo a@(Admin _ i) = i
+    getinfo a = ""
 
 handleAdminRequest :: Admin -> AdminAction -> AppM [HelpRequest]
-handleAdminRequest (Admin name) (AdminAction id act)   = do
+handleAdminRequest (Admin name _) (AdminAction id act)   = do
   ts   <- liftIO $ getCurrentTime
   ServantState{state=sest} <- ask
   res  <- liftIO $ atomically $ stateTVar sest $ \s@State{activeRequests=a,pendingRequests=p,actionLog=log, backlogMinutes=blm} ->
@@ -460,7 +469,7 @@ handleAdminRequest _ _  = throwError $ err400 { errBody = "Invalid user" }
 
 
 handleReload :: Admin -> AppM State
-handleReload (Admin _) = do
+handleReload (Admin _ _) = do
   ServantState{state=sest,configfile=fp,userdb=udbref} <- ask
   configdata <- liftIO $ parseLectureConfig fp
   case configdata of

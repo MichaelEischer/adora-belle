@@ -416,6 +416,14 @@ function updateLectureName(lectureName) {
 	$('#lectureName').text(lectureName);
 }
 
+function updateUserInfo(userInfo) {
+	$('#userInfo').text(userInfo);
+	if (!userInfo) {
+		$('#userInfo').hide();
+	} else {
+		$('#userInfo').show();
+	}
+}
 
 function updateUi() {
 	$.get(informationendpoint, {
@@ -423,6 +431,7 @@ function updateUi() {
 	}).done(function (data) {
 		conferencebaseurl = data.conferenceUrl;
 		updateLectureName(data.lectureName);
+		updateUserInfo(data.userInfo);
 		updateTimeSlots(data.timeSlots);
 		updatePendingRequests(data.pendingRequests);
 		updateServicedRequests(data.activeRequests);
@@ -449,7 +458,7 @@ function relayoutWidth(window) {
 		wclass = "w-50";
 	}
 
-	['#errPanel', '#servicedReqs', '#pendingReqs'].forEach(function (elem) {
+	['#errPanel', '#servicedReqs', '#pendingReqs', '#userInfo'].forEach(function (elem) {
 		var domitem = $(elem);
 		['w-100', 'w-75', 'w-50'].forEach(c => domitem.removeClass(c));
 		domitem.addClass(wclass);
