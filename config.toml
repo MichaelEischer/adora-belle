@@ -13,68 +13,19 @@ end   = "18:45"
 user  = 'user1'
 pass  = 'pw'
 admin = false
+uinfo = 'Text!'
+url = 'https://meet.jit.si/user1'
 
 [[authdb]]
 user  = 'user2'
 pass  = 'pw'
 admin = false
-
-[[authdb]]
-user  = 'user3'
-pass  = 'pw'
-admin = false
-
-[[authdb]]
-user  = 'user4'
-pass  = 'pw'
-admin = false
-
-[[authdb]]
-user  = 'user5'
-pass  = 'pw'
-admin = false
-
-[[authdb]]
-user  = 'user6'
-pass  = 'pw'
-admin = false
-
-[[authdb]]
-user  = 'user7'
-pass  = 'pw'
-admin = false
-
-[[authdb]]
-user  = 'user8'
-pass  = 'pw'
-admin = false
+uinfo = 'Text2!'
+url = 'https://meet.jit.si/user2'
 
 [[authdb]]
 user  = 'admin1'
 pass  = 'admin'
 admin = true
-
-[[authdb]]
-user  = 'admin2'
-pass  = 'admin'
-admin = true
-
-[[authdb]]
-user  = 'admin3'
-pass  = 'admin'
-admin = true
-
-[[authdb]]
-user  = 'admin4'
-pass  = 'admin'
-admin = true
-
-[[authdb]]
-user  = 'admin5'
-pass  = 'admin'
-admin = true
-
-[[authdb]]
-user  = 'bcrypt'
-pass  = '$2y$14$xBBZdWgTa8fSU1aPFP5IxeVdUKfT7hUDjmusZEAiNBiYaYEGY/Sh6'
-admin = false
+uinfo = 'Text Admin'
+url = 'https://meet.jit.si/admin1'
