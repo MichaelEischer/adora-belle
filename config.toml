@@ -13,7 +13,7 @@ end   = "18:45"
 user  = 'user1'
 pass  = 'pw'
 admin = false
-uinfo = 'Text!'
+uinfo = 'Text <a href="#this">Link</a>!'
 url = 'https://meet.jit.si/user1'
 
 [[authdb]]

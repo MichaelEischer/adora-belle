@@ -417,7 +417,7 @@ function updateLectureName(lectureName) {
 }
 
 function updateUserInfo(userInfo) {
-	$('#userInfo').text(userInfo);
+	$('#userInfo').html(userInfo);
 	if (!userInfo) {
 		$('#userInfo').hide();
 	} else {
