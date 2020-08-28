@@ -239,6 +239,9 @@ function formatRequest(req, context=null) {
 		elem.text(req.reqtype);
 	} else {
 		var url = formatUrl(req.reqid.contents);
+		if (req.helpUrl) {
+			url = req.helpUrl;
+		}
 		if (context == "log") {
 			elem = $('<div class="list-group-item list-group-item-secondary align-items-center text-left d-flex flex-wrap justify-content-between"></div>');
 		} else if (req.reqtype == "Submission") {

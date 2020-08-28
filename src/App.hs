@@ -59,7 +59,7 @@ data RequestID = RequestID UUID | BlindedID
 instance ToJSON RequestID
 instance FromJSON RequestID
 
-data HelpRequest = HelpRequest { reqid :: RequestID, userid :: Identification, time :: UTCTime, reqtype :: RequestType }
+data HelpRequest = HelpRequest { reqid :: RequestID, userid :: Identification, helpUrl :: String, time :: UTCTime, reqtype :: RequestType }
   deriving (Generic, Show, Eq)
 instance ToJSON HelpRequest
 
@@ -113,6 +113,7 @@ data User = User
   { user  :: Username
   , pass  :: Password
   , admin :: Bool
+  , url   :: String
   } deriving (Eq, Show, Generic)
 instance FromJSON User
 -- could be a postgres connection, a file, anything.
@@ -322,7 +323,7 @@ expireLog maxbacklog now log = filter (\LogItem{timeStamp=rtime} -> (diffUTCTime
 
 checkUserHasRequestsPending :: String -> State -> Bool
 checkUserHasRequestsPending name State{activeRequests=a, pendingRequests=p} =
-  any usermatches $ Prelude.map (\(HelpRequest _ ident _ _) -> ident) $ (Map.elems a) ++ p
+  any usermatches $ Prelude.map (\(HelpRequest _ ident _ _ _) -> ident) $ (Map.elems a) ++ p
   where
     usermatches (AuthUser uname) = name == uname
     usermatches _ = False
@@ -348,7 +349,7 @@ requestHelp u rt = do
     else if checkUserHasRequestsPending (user u) s then
         (Left "User already has a request pending", s)
     else do
-        let req = HelpRequest (RequestID uuid) (AuthUser $ user u) ts rt
+        let req = HelpRequest (RequestID uuid) (AuthUser $ user u) (url $ u) ts rt
         let act = LogItem{action = UserLogAction Create, timeStamp = ts, actor = user u, requests = [req]}
         (Right req, s{activeRequests=a, pendingRequests=(p ++ [req]), actionLog=expireLog blm ts (act:log)})
 
@@ -395,10 +396,10 @@ requestPublicState u = do
   let pend   = Prelude.map blind p
   return $ s{activeRequests=active, pendingRequests=pend, actionLog = []}
   where
-    blind r@(HelpRequest _ (AuthUser au) _ _)
+    blind r@(HelpRequest _ (AuthUser au) _ _ _)
         | au == user u = r
-        | otherwise = r { userid = Anonymous, reqid = BlindedID }
-    blind r = r { userid = Anonymous, reqid = BlindedID }
+        | otherwise = r { userid = Anonymous, reqid = BlindedID, helpUrl = "" }
+    blind r = r { userid = Anonymous, reqid = BlindedID, helpUrl = "" }
 
 
 requestAdminState  :: Admin -> AppM State
