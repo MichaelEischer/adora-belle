@@ -13,6 +13,7 @@ end   = "18:45"
 user  = 'user1'
 pass  = 'pw'
 admin = false
+group = "42"
 uinfo = 'Text <a href="#this">Link</a>!'
 url = 'https://meet.jit.si/user1'
 
@@ -20,6 +21,7 @@ url = 'https://meet.jit.si/user1'
 user  = 'user2'
 pass  = 'pw'
 admin = false
+group = "42"
 uinfo = 'Text2!'
 url = 'https://meet.jit.si/user2'
 
@@ -27,5 +29,6 @@ url = 'https://meet.jit.si/user2'
 user  = 'admin1'
 pass  = 'admin'
 admin = true
+group = "admin"
 uinfo = 'Text Admin'
 url = 'https://meet.jit.si/admin1'

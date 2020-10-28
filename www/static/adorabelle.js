@@ -265,7 +265,7 @@ function formatRequest(req, context=null) {
 		elem.append(typedate);
 		if (admininterface) {
 			var userid = $('<div></div>');
-			userid.text(req.userid.contents);
+			userid.text(req.userid.contents + " - " + req.groupid.contents);
 			elem.append(userid);
 		}
 		var a = $('<a target="_blank" rel="noopener noreferrer" />');

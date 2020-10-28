@@ -59,7 +59,7 @@ data RequestID = RequestID UUID | BlindedID
 instance ToJSON RequestID
 instance FromJSON RequestID
 
-data HelpRequest = HelpRequest { reqid :: RequestID, userid :: Identification, helpUrl :: String, time :: UTCTime, reqtype :: RequestType }
+data HelpRequest = HelpRequest { reqid :: RequestID, userid :: Identification, groupid :: Identification, helpUrl :: String, time :: UTCTime, reqtype :: RequestType }
   deriving (Generic, Show, Eq)
 instance ToJSON HelpRequest
 
@@ -116,6 +116,7 @@ data User = User
   , admin :: Bool
   , uinfo  :: String
   , url   :: String
+  , group :: Username
   } deriving (Eq, Show, Generic)
 instance FromJSON User
 -- could be a postgres connection, a file, anything.
@@ -324,12 +325,12 @@ expireLog maxbacklog now log = filter (\LogItem{timeStamp=rtime} -> (diffUTCTime
   where
     maxdiff = secondsToNominalDiffTime $ fromInteger $ 60 * maxbacklog
 
-checkUserHasRequestsPending :: String -> State -> Bool
-checkUserHasRequestsPending name State{activeRequests=a, pendingRequests=p} =
-  any usermatches $ Prelude.map (\(HelpRequest _ ident _ _ _) -> ident) $ (Map.elems a) ++ p
+checkGroupHasRequestsPending :: String -> State -> Bool
+checkGroupHasRequestsPending name State{activeRequests=a, pendingRequests=p} =
+  any groupmatches $ Prelude.map (\(HelpRequest _ _ ident _ _ _) -> ident) $ (Map.elems a) ++ p
   where
-    usermatches (AuthUser uname) = name == uname
-    usermatches _ = False
+    groupmatches (AuthUser gname) = name == gname
+    groupmatches _ = False
 
 checkTimeslotsInTimeZone :: UTCTime -> TimeZone -> [TimeRange] -> Bool
 checkTimeslotsInTimeZone _ _ [] = True
@@ -349,11 +350,11 @@ requestHelp u rt = do
   req  <- liftIO $ atomically $ stateTVar sest $ \s@State{activeRequests=a,pendingRequests=p,timeSlots=slots,actionLog=log,backlogMinutes=blm} ->
     if not $ checkTimeslotsInTimeZone ts tz  slots then
       (Left "Requests are only allowed during the designated timeslots", s)
-    else if checkUserHasRequestsPending (user u) s then
-        (Left "User already has a request pending", s)
+    else if checkGroupHasRequestsPending (group u) s then
+        (Left "Group already has a request pending", s)
     else do
-        let req = HelpRequest (RequestID uuid) (AuthUser $ user u) (url $ u) ts rt
-        let act = LogItem{action = UserLogAction Create, timeStamp = ts, actor = user u, requests = [req]}
+        let req = HelpRequest (RequestID uuid) (AuthUser $ user u) (AuthUser $ group u) (url $ u) ts rt
+        let act = LogItem{action = UserLogAction Create, timeStamp = ts, actor = group u, requests = [req]}
         (Right req, s{activeRequests=a, pendingRequests=(p ++ [req]), actionLog=expireLog blm ts (act:log)})
 
   case req of
@@ -374,10 +375,10 @@ cancelRequest u rid = do
     in
       if (Data.List.null removed) then
          (Left $ "No request matched uuid: " ++ (show rid), s)
-      else if any (\req -> (userid req) /= (AuthUser $ user u)) removed then
+      else if any (\req -> (groupid req) /= (AuthUser $ group u)) removed then
          (Left $ "Access violation: You do not own request " ++ (show rid), s)
       else
-         let act = LogItem{action = UserLogAction Cancel, timeStamp = ts, actor = user u, requests = removed}
+         let act = LogItem{action = UserLogAction Cancel, timeStamp = ts, actor = group u, requests = removed}
          in
            (Right removed, s{activeRequests=remainingactive, pendingRequests=rest, actionLog=expireLog blm ts (act:log)})
 
@@ -400,10 +401,10 @@ requestPublicState u = do
   let inf    = uinfo $ u
   return $ s{activeRequests=active, pendingRequests=pend, userInfo=inf, actionLog = []}
   where
-    blind r@(HelpRequest _ (AuthUser au) _ _ _)
-        | au == user u = r
-        | otherwise = r { userid = Anonymous, reqid = BlindedID, helpUrl = "" }
-    blind r = r { userid = Anonymous, reqid = BlindedID, helpUrl = "" }
+    blind r@(HelpRequest _ _ (AuthUser ag) _ _ _)
+        | ag == group u = r
+        | otherwise = r { userid = Anonymous, groupid = Anonymous, reqid = BlindedID, helpUrl = "" }
+    blind r = r { userid = Anonymous, groupid = Anonymous, reqid = BlindedID, helpUrl = "" }
 
 
 requestAdminState  :: Admin -> AppM State
