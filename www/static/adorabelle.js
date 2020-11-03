@@ -235,7 +235,7 @@ function formatRequest(req, context=null) {
 		elem = $('<div class="list-group-item list-group-item-light"></div>');
 		elem.text("Inactive");
 	} else if (req.reqid.tag == "BlindedID" || req.userid.tag == "Anonymous") {
-		elem = $('<div class="list-group-item list-group-item-light"></div>');
+		elem = $('<div class="list-group-item list-group-item text-left list-group-item-secondary"></div>');
 		elem.text(req.reqtype);
 	} else {
 		var url = formatUrl(req.reqid.contents);
