@@ -251,6 +251,10 @@ function formatRequest(req, context=null) {
 			elem = $('<div class="list-group-item list-group-item-primary align-items-center text-left d-flex flex-wrap justify-content-between"></div>');
 			elem.prop('id', req.reqid.contents);
 		}
+		if (context == "active") {
+			// highlight serviced requests
+			elem.addClass("list-group-item-action active");
+		}
 		var typedate = $('<div style="text-align: center"></div>');
 		typedate.text(req.reqtype);
 		if (admininterface) {
