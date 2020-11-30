@@ -335,6 +335,7 @@ function updateServicedRequests(servicedRequests) {
 }
 
 const seen = new Set();
+let firstUpdate = true;
 
 function updatePendingRequests(pendingRequests) {
 	var elem = $('#pendingReqs').clone().empty();
@@ -345,9 +346,10 @@ function updatePendingRequests(pendingRequests) {
 		}
 		elem.append(formatRequest(x, "pending"));
 	});
-	if (admininterface && getPreference('usesound') && before != 0 && seen.size > before) {
+	if (admininterface && getPreference('usesound') && !firstUpdate && seen.size > before) {
 		new Audio("static/sound.opus").play();
 	}
+	firstUpdate = false;
 	$('#pendingReqs').replaceWith(elem);
 }
 
